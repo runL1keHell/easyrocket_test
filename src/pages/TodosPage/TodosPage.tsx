@@ -11,7 +11,12 @@ import { SearchInput } from "../../components/UI/SearchInput/SearchInput.tsx";
 export const TodosPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [todos, setTodos] = useState<TodoItemType[]>([]);
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState<{
+        title: string;
+        completed: string;
+        sortBy: string;
+        sortOrder: string
+    }>({
         title: searchParams.get('title') ?? '',
         completed: searchParams.get('completed') ?? '',
         sortBy: searchParams.get('sortBy') ?? '',
@@ -68,7 +73,7 @@ export const TodosPage = () => {
             });
 
         }
-    }, [data, filters, currentPage]);
+    }, [data, filters, currentPage, setSearchParams]);
 
     const todosForSinglePage = todos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
     const totalPagesAmount = Math.ceil(todos.length/todosQuantityPerPage);
