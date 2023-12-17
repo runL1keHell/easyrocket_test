@@ -29,6 +29,10 @@ export const TodosPage = () => {
     // TODO FILTRATION
 
     useEffect(() => {
+        setCurrentPage(1)
+    }, [filters]);
+
+    useEffect(() => {
         if (data) {
             const todosFilteredByTitle = data.filter((todo) => todo.title?.includes(filters.title));
 
@@ -65,9 +69,6 @@ export const TodosPage = () => {
 
         }
     }, [data, filters, currentPage]);
-
-
-    console.log(filters)
 
     const todosForSinglePage = todos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
     const totalPagesAmount = Math.ceil(todos.length/todosQuantityPerPage);
