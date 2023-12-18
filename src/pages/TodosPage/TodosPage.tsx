@@ -9,15 +9,17 @@ import { TodoItemType } from "../../@types/types.ts";
 import { SearchInput } from "../../components/UI/SearchInput/SearchInput.tsx";
 import {TodoItem} from "../../components/UI/TodoItem/TodoItem.tsx";
 
+type filtersType = {
+    title: string;
+    completed: string;
+    sortBy: string;
+    sortOrder: string;
+    [key: string]: string;
+};
+
 export const TodosPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [todos, setTodos] = useState<TodoItemType[]>([]);
-    const [filters, setFilters] = useState<{
-        title: string;
-        completed: string;
-        sortBy: string;
-        sortOrder: string
-    }>({
+    const [filters, setFilters] = useState<filtersType>({
         title: searchParams.get('title') ?? '',
         completed: searchParams.get('completed') ?? '',
         sortBy: searchParams.get('sortBy') ?? '',
@@ -28,65 +30,66 @@ export const TodosPage = () => {
     const todosQuantityPerPage = 15;
     const { data, isLoading, isError } = useQuery("todos", () => getTodos());
 
-    useEffect(() => {
-        data && setTodos(data);
-    }, [data]);
+    const useFilteredTodos = (data: TodoItemType[] | undefined, filters: filtersType) => {
+        return  useMemo(() => {
+            if (data) {
+                const todosFilteredByTitle = data.filter((todo) =>
+                    todo.title?.includes(filters.title)
+                );
+
+                const todosFilteredByCompleted = todosFilteredByTitle.filter((todo) => {
+                    if (filters.completed === "true") return todo.completed;
+                    if (filters.completed === "false") return !todo.completed;
+                    if (filters.completed === "") return todo;
+                });
+
+                return todosFilteredByCompleted.sort((a, b) => {
+                    const aValue =
+                        filters.sortBy === "title" ? (a.title ?? "").length : a.id;
+                    const bValue =
+                        filters.sortBy === "title" ? (b.title ?? "").length : b.id;
+
+                    if (filters.sortOrder === "ascending") {
+                        return aValue - bValue;
+                    } else if (filters.sortOrder === "descending") {
+                        return bValue - aValue;
+                    } else {
+                        return 0;
+                    }
+                });
+            }
+            return [];
+        }, [data, filters]);
+    };
+
+    const filteredTodos = useFilteredTodos(data , filters)
 
     useEffect(() => {
         setCurrentPage(1)
     }, [filters]);
 
     useEffect(() => {
-        if (data) {
-            const todosFilteredByTitle = data.filter((todo) => todo.title?.includes(filters.title));
+        const newSearchParams = Object.fromEntries(
+            Object.entries({
+                page: String(currentPage),
+                title: filters.title,
+                completed: filters.completed,
+                sortBy: filters.sortBy,
+                sortOrder: filters.sortOrder
+            }).filter(([_, value]) => value !== '')
+        );
 
-            const todosFilteredByCompleted = todosFilteredByTitle.filter(todo => {
-                if (filters.completed === 'true') return todo.completed;
-                if (filters.completed === 'false') return !todo.completed;
-                if (filters.completed === '') return todo;
-            });
-            const sortTodos = (todosArr: TodoItemType[], sortParam: string, orderParam: string) => {
-                return todosArr.sort((a, b) => {
-                    const aValue = sortParam === 'title' ? (a.title ?? '').length : a.id;
-                    const bValue = sortParam === 'title' ? (b.title ?? '').length : b.id;
+        setSearchParams(newSearchParams);
 
-                    if (orderParam === 'ascending') {
-                        return aValue - bValue;
-                    } else if (orderParam === 'descending') {
-                        return bValue - aValue;
-                    } else {
-                        return 0;
-                    }
-                });
-            };
-            // const sortedTodos = useMemo(() => sortTodos(todosFilteredByCompleted, filters.sortBy, filters.sortOrder), [filters]);
+    }, [data, filters, setSearchParams, currentPage]);
 
-
-            setTodos(sortedTodos);
-
-            const newSearchParams = Object.fromEntries(
-                Object.entries({
-                    page: String(currentPage),
-                    title: filters.title,
-                    completed: filters.completed,
-                    sortBy: filters.sortBy,
-                    sortOrder: filters.sortOrder
-                }).filter(([_, value]) => value !== '')
-            );
-
-            setSearchParams(newSearchParams);
-
-        }
-    }, [data, filters, currentPage, setSearchParams]);
-
-    const todosForSinglePage = todos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
-    const totalPagesAmount = Math.ceil(todos.length/todosQuantityPerPage);
+    const todosForSinglePage = filteredTodos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
+    const totalPagesAmount = Math.ceil(filteredTodos.length/todosQuantityPerPage);
 
     const handlePageClick = useCallback((pageNumber: number) => {
         setCurrentPage(pageNumber);
     },[setCurrentPage]);
 
-    //TODO
     const handleFilterChange = useCallback((field: string, value:string) => {
         if (filters[field] === value) {
             setFilters({...filters, [field]: ''})
@@ -145,3 +148,6 @@ export const TodosPage = () => {
         </section>
     );
 };
+
+
+
