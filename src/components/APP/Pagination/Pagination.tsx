@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+import React, {useMemo} from "react";
 import {PaginationButton} from "../../UI/PaginationButton/PaginationButton.tsx";
 
 type PaginationPropsType = {
@@ -8,7 +8,7 @@ type PaginationPropsType = {
     handlePageClick(pageNum:number) : void;
 }
 
-export const Pagination = ({currentPage, totalPagesAmount, className, handlePageClick}: PaginationPropsType) => {
+export const Pagination = React.memo(({currentPage, totalPagesAmount, className, handlePageClick}: PaginationPropsType) => {
 
     const createArrByLimit = (limit: number): number[] => {
         return Array.from({length: limit}, (_,i) => ++i);
@@ -48,4 +48,4 @@ export const Pagination = ({currentPage, totalPagesAmount, className, handlePage
             />
         </div>
     )
-}
+});

@@ -1,31 +1,25 @@
-import {TodoItem} from "../TodoItem/TodoItem.tsx";
 import {TodoItemType} from "../../../@types/types.ts";
+import React from "react";
 
 export type TableType = {
     className?: string;
-    firstColumnName: string;
-    secondColumnName?: string;
-    thirdColumnName?: string;
-    fourthColumnName?: string;
-    todos: TodoItemType[];
+    headers: string[];
+    data: TodoItemType[];
+    renderRow: (item: TodoItemType) => React.ReactElement;
 }
-export const Table = ({className, firstColumnName, secondColumnName, thirdColumnName, fourthColumnName, todos }: TableType) => {
-
+export const Table = React.memo(({ className, headers, data, renderRow }: TableType) => {
     return (
-        <table className={`w-full table table-lg flex justify-center  ${className}`}>
+        <table className={`w-full table table-lg transition-opacity duration-300 ease-in-out ${data ? 'opacity-100' : 'opacity-0'}  ${className ?? ''}`}>
             <thead>
             <tr>
-                <th>{firstColumnName}</th>
-                <th>{secondColumnName}</th>
-                <th>{thirdColumnName}</th>
-                <th>{fourthColumnName}</th>
+                {headers.map((header, index) => (
+                    <th key={index} className={``}>{header}</th>
+                ))}
             </tr>
             </thead>
             <tbody>
-            {todos && todos.map((todo) => {
-                return <TodoItem key={todo.id} id={todo.id} userId={todo.userId} title={todo.title} completed={todo.completed} />
-            })}
+            {data && data.map(renderRow)}
             </tbody>
         </table>
     )
-}
+})

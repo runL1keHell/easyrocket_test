@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import { useQuery } from "react-query";
 import { useSearchParams } from "react-router-dom";
 import { Table } from "../../components/UI/Table/Table.tsx";
@@ -7,6 +7,7 @@ import { Pagination } from "../../components/APP/Pagination/Pagination.tsx";
 import { Dropdown } from "../../components/UI/Dropdown/Dropdown.tsx";
 import { TodoItemType } from "../../@types/types.ts";
 import { SearchInput } from "../../components/UI/SearchInput/SearchInput.tsx";
+import {TodoItem} from "../../components/UI/TodoItem/TodoItem.tsx";
 
 export const TodosPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -30,8 +31,6 @@ export const TodosPage = () => {
     useEffect(() => {
         data && setTodos(data);
     }, [data]);
-
-    // TODO FILTRATION
 
     useEffect(() => {
         setCurrentPage(1)
@@ -60,17 +59,22 @@ export const TodosPage = () => {
                     }
                 });
             };
-            const sortedTodos = sortTodos(todosFilteredByCompleted, filters.sortBy, filters.sortOrder);
+            // const sortedTodos = useMemo(() => sortTodos(todosFilteredByCompleted, filters.sortBy, filters.sortOrder), [filters]);
+
 
             setTodos(sortedTodos);
 
-            setSearchParams({
-                page: String(currentPage),
-                title: filters.title,
-                completed: filters.completed,
-                sortBy: filters.sortBy,
-                sortOrder: filters.sortOrder
-            });
+            const newSearchParams = Object.fromEntries(
+                Object.entries({
+                    page: String(currentPage),
+                    title: filters.title,
+                    completed: filters.completed,
+                    sortBy: filters.sortBy,
+                    sortOrder: filters.sortOrder
+                }).filter(([_, value]) => value !== '')
+            );
+
+            setSearchParams(newSearchParams);
 
         }
     }, [data, filters, currentPage, setSearchParams]);
@@ -78,21 +82,28 @@ export const TodosPage = () => {
     const todosForSinglePage = todos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
     const totalPagesAmount = Math.ceil(todos.length/todosQuantityPerPage);
 
-    const handlePageClick = (pageNumber: number) => {
+    const handlePageClick = useCallback((pageNumber: number) => {
         setCurrentPage(pageNumber);
-    };
-    const handleFilterChange = (field: string, value:string) => {
-        setFilters({ ...filters, [field]: value });
-    };
+    },[setCurrentPage]);
+
+    //TODO
+    const handleFilterChange = useCallback((field: string, value:string) => {
+        if (filters[field] === value) {
+            setFilters({...filters, [field]: ''})
+        } else {
+            setFilters({ ...filters, [field]: value });
+        }
+    },[filters]);
 
     if (isLoading) return <h1>The page is loading...</h1>;
     if (isError) return <h1>An error occurred. Sorry</h1>;
 
     return (
-        <section className="min-w-full">
+        <section className="w-[100%] flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold mb-10">Todos Page</h1>
-            <div className="flex justify-evenly items-center mb-16">
+            <div className="w-full flex justify-between items-center mb-16">
                 <SearchInput
+                    placeholder='Search'
                     value={filters.title}
                     onChange={(e) => {
                         handleFilterChange('title', e.target.value);
@@ -103,34 +114,27 @@ export const TodosPage = () => {
                     onClick={handleFilterChange}
                     value='completed'
                     name="Completed"
-                    firstOption="All"
-                    secondOption="True"
-                    thirdOption="False"
+                    options={['True', 'False']}
                 />
                 <Dropdown
                     onClick={handleFilterChange}
                     value='sortBy'
-                    name="Sort By"
-                    firstOption="Default"
-                    secondOption="Id"
-                    thirdOption="Title"
+                    name='Sort By'
+                    options={['Id', 'Title']}
                 />
                 <Dropdown
                     value='sortOrder'
                     onClick={handleFilterChange}
-                    name="Sort Order"
-                    firstOption="Default"
-                    secondOption="Ascending"
-                    thirdOption="Descending"
+                    name="Order"
+                    options={['Ascending', 'Descending']}
                 />
             </div>
             <Table
-                className="flex justify-center"
-                firstColumnName="Id"
-                secondColumnName="UserId"
-                thirdColumnName="Title"
-                fourthColumnName="Completed"
-                todos={todosForSinglePage}
+                headers={['Id', 'UserId', 'Title', 'Completed']}
+                data={todosForSinglePage}
+                renderRow={(todo) => {
+                    return <TodoItem key={todo.id} id={todo.id} userId={todo.userId} title={todo.title} completed={todo.completed} />
+                }}
             />
             <Pagination
                 className="mt-6"
