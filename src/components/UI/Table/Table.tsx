@@ -6,14 +6,15 @@ export type TableType = {
     headers: string[];
     data: TodoItemType[];
     renderRow: (item: TodoItemType) => React.ReactElement;
+    columnsWidth: string[];
 }
-export const Table = React.memo(({ className, headers, data, renderRow }: TableType) => {
+export const Table = React.memo(({ className, headers, data, renderRow, columnsWidth }: TableType) => {
     return (
-        <table className={`w-full table table-lg transition-opacity duration-300 ease-in-out ${data ? 'opacity-100' : 'opacity-0'}  ${className ?? ''}`}>
+        <table className={`table-fixed table table-lg ${className ?? ''}`}>
             <thead>
             <tr>
                 {headers.map((header, index) => (
-                    <th key={index} className={``}>{header}</th>
+                    <th key={index} className={columnsWidth[index]}>{header}</th>
                 ))}
             </tr>
             </thead>

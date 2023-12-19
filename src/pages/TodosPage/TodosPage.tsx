@@ -26,12 +26,11 @@ export const TodosPage = () => {
         sortOrder: searchParams.get('sortOrder') ?? '',
     });
     const [currentPage, setCurrentPage] = useState<number>(Number(searchParams.get('page')) || 1);
-
     const todosQuantityPerPage = 15;
     const { data, isLoading, isError } = useQuery("todos", () => getTodos());
 
     const useFilteredTodos = (data: TodoItemType[] | undefined, filters: filtersType) => {
-        return  useMemo(() => {
+        return useMemo(() => {
             if (data) {
                 const todosFilteredByTitle = data.filter((todo) =>
                     todo.title?.includes(filters.title)
@@ -43,26 +42,30 @@ export const TodosPage = () => {
                     if (filters.completed === "") return todo;
                 });
 
-                return todosFilteredByCompleted.sort((a, b) => {
-                    const aValue =
-                        filters.sortBy === "title" ? (a.title ?? "").length : a.id;
-                    const bValue =
-                        filters.sortBy === "title" ? (b.title ?? "").length : b.id;
+                if (filters.sortOrder && filters.sortBy) {
+                    return todosFilteredByCompleted.sort((a, b) => {
+                        const aValue =
+                            filters.sortBy === "title" ? (a.title ?? "").length : a.id;
+                        const bValue =
+                            filters.sortBy === "title" ? (b.title ?? "").length : b.id;
 
-                    if (filters.sortOrder === "ascending") {
-                        return aValue - bValue;
-                    } else if (filters.sortOrder === "descending") {
-                        return bValue - aValue;
-                    } else {
-                        return 0;
-                    }
-                });
+                        if (filters.sortOrder === "ascending") {
+                            return aValue - bValue;
+                        } else if (filters.sortOrder === "descending") {
+                            return bValue - aValue;
+                        } else {
+                            return 0;
+                        }
+                    });
+                }
+
+                return todosFilteredByCompleted;
             }
             return [];
         }, [data, filters]);
     };
 
-    const filteredTodos = useFilteredTodos(data , filters)
+    const filteredTodos: TodoItemType[] = useFilteredTodos(data , filters)
 
     useEffect(() => {
         setCurrentPage(1)
@@ -78,13 +81,11 @@ export const TodosPage = () => {
                 sortOrder: filters.sortOrder
             }).filter(([_, value]) => value !== '')
         );
-
         setSearchParams(newSearchParams);
-
     }, [data, filters, setSearchParams, currentPage]);
 
-    const todosForSinglePage = filteredTodos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
-    const totalPagesAmount = Math.ceil(filteredTodos.length/todosQuantityPerPage);
+    const todosForSinglePage: TodoItemType[] = filteredTodos.slice((currentPage-1)*todosQuantityPerPage, currentPage*todosQuantityPerPage);
+    const totalPagesAmount: number = Math.ceil(filteredTodos.length/todosQuantityPerPage);
 
     const handlePageClick = useCallback((pageNumber: number) => {
         setCurrentPage(pageNumber);
@@ -96,15 +97,15 @@ export const TodosPage = () => {
         } else {
             setFilters({ ...filters, [field]: value });
         }
-    },[filters]);
+    },[filters, setFilters]);
 
-    if (isLoading) return <h1>The page is loading...</h1>;
+    if (isLoading) return <span className="loading loading-infinity loading-lg"></span>;
     if (isError) return <h1>An error occurred. Sorry</h1>;
 
     return (
-        <section className="w-[100%] flex flex-col items-center justify-center">
+        <section className="flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold mb-10">Todos Page</h1>
-            <div className="w-full flex justify-between items-center mb-16">
+            <div className="w-full max-w-[900px] flex justify-between items-center mb-16">
                 <SearchInput
                     placeholder='Search'
                     value={filters.title}
@@ -112,7 +113,6 @@ export const TodosPage = () => {
                         handleFilterChange('title', e.target.value);
                     }}
                 />
-
                 <Dropdown
                     onClick={handleFilterChange}
                     value='completed'
@@ -133,7 +133,9 @@ export const TodosPage = () => {
                 />
             </div>
             <Table
+                className=''
                 headers={['Id', 'UserId', 'Title', 'Completed']}
+                columnsWidth={['w-[10%]', 'w-[10%]', 'w-[60%]', 'w-[20%]']}
                 data={todosForSinglePage}
                 renderRow={(todo) => {
                     return <TodoItem key={todo.id} id={todo.id} userId={todo.userId} title={todo.title} completed={todo.completed} />

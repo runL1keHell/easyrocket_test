@@ -1,5 +1,6 @@
-import React, {useMemo} from "react";
+import React from "react";
 import {PaginationButton} from "../../UI/PaginationButton/PaginationButton.tsx";
+import {createArrByLimit} from "../../../utils/utils.ts";
 
 type PaginationPropsType = {
     currentPage: number;
@@ -9,16 +10,7 @@ type PaginationPropsType = {
 }
 
 export const Pagination = React.memo(({currentPage, totalPagesAmount, className, handlePageClick}: PaginationPropsType) => {
-
-    const createArrByLimit = (limit: number): number[] => {
-        return Array.from({length: limit}, (_,i) => ++i);
-    };
-
-
-    const arrOfPages = useMemo(
-        () => createArrByLimit(totalPagesAmount),
-        [totalPagesAmount]
-    );
+    const arrOfPages = createArrByLimit(totalPagesAmount);
 
     return (
         <div className={`${className}`}>

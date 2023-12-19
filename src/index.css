@@ -8,6 +8,10 @@
   box-sizing: border-box;
 }
 
+.loading-lg {
+  @apply w-20 h-14;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

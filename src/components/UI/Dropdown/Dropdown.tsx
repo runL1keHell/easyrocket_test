@@ -8,7 +8,6 @@ type DropdownProps = {
 };
 
 export const Dropdown = React.memo(({ name, options, value, onClick }: DropdownProps) => {
-    console.log('DROPDOWN RENDERED')
     return (
         <div className="dropdown dropdown-bottom dropdown-hover">
             <div tabIndex={0} role="button" className="btn m-1">{name}</div>
